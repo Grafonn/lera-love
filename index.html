@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Для моей Леры ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&family=Pacifico&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root { --bg-main: #0b3d2e; --accent-lime: #c5e1a5; --bright-rose: #ff4d6d; --glass: rgba(255, 255, 255, 0.1); }
+        
+        body { 
+            margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; 
+            background: radial-gradient(circle at center, #1a4d3c 0%, #051a14 100%); 
+            color: white; overflow-x: hidden; scroll-behavior: smooth; 
+        }
+
+        /* HERO SECTION */
+        .hero { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+        h1 { font-family: 'Pacifico', cursive; font-size: 2.2rem; color: var(--accent-lime); margin-bottom: 20px; padding: 0 20px; }
+        
+        /* СТИЛЬНЫЙ ШРИФТ ДЛЯ ВОПРОСА */
+        .val-question { 
+            font-family: 'Pacifico', cursive; 
+            font-size: 1.6rem; 
+            margin: 30px 0; 
+            color: #fff; 
+            text-shadow: 0 0 10px rgba(197, 225, 165, 0.5);
+        }
+
+        .carousel-container { height: 420px; width: 100%; display: flex; align-items: center; justify-content: center; perspective: 1200px; position: relative; cursor: pointer; }
+        .photo { width: 260px; height: 360px; border-radius: 20px; object-fit: cover; position: absolute; transition: all 1s cubic-bezier(0.4, 0, 0.2, 1); border: 4px solid white; box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; }
+        .photo.active { opacity: 1; transform: scale(1.1); z-index: 10; border-color: var(--bright-rose); pointer-events: auto; }
+        .photo.prev { opacity: 0.4; transform: scale(0.8) translateX(-300px) rotateY(35deg); z-index: 5; }
+        .photo.next { opacity: 0.4; transform: scale(0.8) translateX(300px) rotateY(-35deg); z-index: 5; }
+
+        .btn-box { margin-top: 30px; display: flex; gap: 20px; justify-content: center; align-items: center; }
+        .btn { padding: 16px 40px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        #yes { background: var(--bright-rose); color: white; box-shadow: 0 10px 20px rgba(255, 77, 109, 0.3); }
+        #no { background: var(--glass); color: #ccc; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+
+        .archive { display: none; padding: 60px 20px; background: #08261d; border-top: 2px solid var(--accent-lime); min-height: 100vh; }
+        .tabs-nav { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; }
+        .tab-btn { background: none; border: 2px solid var(--accent-lime); color: var(--accent-lime); padding: 10px 25px; border-radius: 30px; cursor: pointer; font-family: 'Pacifico', cursive; font-size: 1.1rem; transition: 0.3s; }
+        .tab-btn.active { background: var(--accent-lime); color: #08261d; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        #audios-list { display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin: 0 auto; }
+        .audio-card { 
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 225, 165, 0.2); 
+            border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; gap: 15px; 
+            backdrop-filter: blur(10px); transition: all 0.4s ease;
+            opacity: 0; transform: translateY(30px);
+        }
+        .audio-card.show { opacity: 1; transform: translateY(0); }
+        .audio-card.playing-card { border-color: var(--bright-rose); background: rgba(255, 77, 109, 0.1); box-shadow: 0 0 20px rgba(255, 77, 109, 0.2); transform: scale(1.02); }
+
+        .play-btn { width: 45px; height: 45px; background: var(--accent-lime); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .playing-card .play-btn { background: var(--bright-rose); }
+        .play-icon { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #08261d; margin-left: 4px; }
+        .pause-icon { width: 12px; height: 16px; display: none; justify-content: space-between; }
+        .pause-icon::before, .pause-icon::after { content: ""; width: 4px; height: 16px; background: #08261d; }
+
+        .audio-info span { font-size: 0.95rem; font-weight: 600; color: var(--accent-lime); display: block; margin-bottom: 5px; transition: 0.3s; }
+        .playing-card .audio-info span { color: var(--bright-rose); }
+        .wave-icon { display: flex; align-items: flex-end; gap: 2px; height: 15px; }
+        .wave-bar { width: 3px; background: var(--accent-lime); height: 5px; transition: 0.3s; }
+        .playing-card .wave-bar { background: var(--bright-rose); animation: wave 1s ease-in-out infinite; }
+        @keyframes wave { 0%, 100% { height: 5px; } 50% { height: 15px; } }
+        .v-msg { display: none; }
+
+        #videos-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 60px; padding: 60px 0; }
+        .video-wrapper { opacity: 0; transform: scale(0.3); transition: all 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .video-wrapper.show { opacity: 1; transform: scale(1); }
+        .video-wrapper:nth-child(even) { margin-top: 50px; }
+        .circle-video { width: 170px; height: 170px; border-radius: 50%; object-fit: cover; border: 4px solid var(--accent-lime); cursor: pointer; transition: 0.5s; background: #000; }
+        .vid-anim-1 { animation: float1 7s ease-in-out infinite; }
+        .vid-anim-2 { animation: float2 8s ease-in-out infinite; }
+        .vid-anim-3 { animation: float3 6s ease-in-out infinite; }
+        .vid-anim-4 { animation: float4 9s ease-in-out infinite; }
+        @keyframes float1 { 0%, 100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(15px, -20px) rotate(5deg); } }
+        @keyframes float2 { 0%, 100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-15px, -10px) rotate(-8deg); } }
+        @keyframes float3 { 0%, 100% { transform: scale(1) translate(0,0); } 50% { transform: scale(1.05) translate(10px, 15px); } }
+        @keyframes float4 { 0%, 100% { transform: rotate(0deg) translate(0,0); } 50% { transform: rotate(3deg) translate(-10px, 20px); } }
+        .circle-video.playing { transform: scale(1.3) !important; animation-play-state: paused; border-color: var(--bright-rose); z-index: 100; box-shadow: 0 0 30px var(--bright-rose); }
+
+        .serenade-container { max-width: 600px; margin: 80px auto 0; padding: 30px; border: 2px dashed var(--accent-lime); border-radius: 20px; text-align: center; }
+        #quote-text { font-family: 'Caveat', cursive; font-size: 2.2rem; color: var(--accent-lime); }
+        .cursor { display: inline-block; width: 3px; background-color: var(--accent-lime); margin-left: 5px; animation: blink 0.7s infinite; }
+        
+        .next-step-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            margin: 40px auto; background: var(--glass); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2); padding: 20px 40px;
+            border-radius: 50px; width: fit-content; cursor: pointer; transition: 0.4s;
+        }
+        .next-step-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .arrow-down { 
+            width: 12px; height: 12px; border-right: 3px solid var(--accent-lime); border-bottom: 3px solid var(--accent-lime); 
+            transform: rotate(45deg); animation: bounceBtn 2s infinite; 
+        }
+        @keyframes bounceBtn {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(45deg); }
+            40% { transform: translateY(-10px) rotate(45deg); }
+        }
+
+        .final-container {
+            max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; 
+            align-items: center; justify-content: center; gap: 40px;
+        }
+        .final-photo-wrapper {
+            flex: 1; min-width: 300px; max-width: 450px; opacity: 0;
+            transform: translateY(30px); transition: 1.5s all ease;
+        }
+        .final-photo-wrapper img {
+            width: 100%; border-radius: 20px; border: 5px solid white;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        .final-text-card {
+            flex: 1.2; min-width: 320px; background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px); border: 1px solid rgba(197, 225, 165, 0.3);
+            padding: 30px; border-radius: 25px; opacity: 0;
+            transform: translateY(30px); transition: 1.5s all ease 0.5s;
+        }
+        .final-text-card p { font-size: 1.1rem; line-height: 1.7; margin: 0; color: #f0f0f0; }
+        .reveal { opacity: 1 !important; transform: translateY(0) !important; }
+
+        #fake-error { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body onclick="startMusic()">
+
+    <audio id="bgMusic" loop>
+        <source src="https://github.com/Grafonn/lera-love/raw/refs/heads/main/m1-online-audio-convertercom_44tfXn6Q.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="fake-error">
+        <h2 style="font-family:'Pacifico'; color:var(--bright-rose)">Ты же не серьезно? 🥺</h2>
+        <button class="btn" style="background:var(--accent-lime); color:#000; margin-top:20px" onclick="closeError()">Конечно нет!</button>
+    </div>
+
+    <div class="hero" id="hero-main">
+        <h1>Моменты, когда мы были рядом ❤️</h1>
+        <div class="carousel-container" id="carousel"></div>
+        <p class="val-question" id="val-q">Ты встретишь со мной День святого Валентина?</p>
+        <div class="btn-box" id="btnArea">
+            <button id="yes" class="btn">ДА, КОНЕЧНО 💖</button>
+            <button id="no" class="btn">Нет</button>
+        </div>
+    </div>
+
+    <div class="archive" id="archive">
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="openTab('audio-tab', this)">Мои любимые голосовые 🎙️</button>
+            <button class="tab-btn" onclick="openTab('video-tab', this)">Мои любимые кружочки 🎥</button>
+        </div>
+        
+        <div id="audio-tab" class="tab-content active">
+            <div id="audios-list"></div>
+        </div>
+        
+        <div id="video-tab" class="tab-content">
+            <div id="videos-grid"></div>
+        </div>
+        
+        <div class="serenade-container">
+            <span id="quote-text"></span><span class="cursor">|</span>
+        </div>
+
+        <div class="next-step-btn" onclick="showFinalSection()">
+            <span>Еще кое-что</span>
+            <div class="arrow-down"></div>
+        </div>
+    </div>
+
+    <section id="final-letter" style="display: none; min-height: 100vh; padding: 100px 20px;">
+        <div class="final-container">
+            <div class="final-photo-wrapper" id="f-photo">
+                <img src="https://github.com/Grafonn/lera-love/blob/main/%D0%9F%D1%80%D0%B0%D0%B9%D0%BC1.jpg?raw=true" alt="Лера">
+            </div>
+            <div class="final-text-card" id="f-text">
+                <p>Мне очень жаль, что меня не было рядом, когда ты делала это фото, как и тысячи остальных. Мне вообще жаль, что ты появилась в моей жизни не так давно. Но, кажется, здесь отлично подходит фраза «Всему свое время». Надеюсь, что так, даже верю в это.<br><br>
+                А еще я верю в то, что у нас впереди будет много того самого времени и совместных фото, что радует меня и делает счастливым. Я всегда буду рядом, несмотря ни на что, чтобы поддержать тебя и быть тем самым человеком, которому можно сказать что угодно и когда угодно, а также чтобы не пропустить ни одно твое фото и сделать побольше совместных.<br><br>
+                Ведь те, что были наверху, — это только начало, их будет в сотни, а то и в тысячи раз больше. Спасибо тебе за каждый день, что ты есть в моей жизни. Очень сильно скучаю и жду каждой нашей встречи. Я люблю тебя, Лер ❤️</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Данные те же самые
+        const photos = ["https://github.com/Grafonn/lera-love/blob/main/1.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/5.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/6.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/7.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/11.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/2.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/3.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/4.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/12.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/10.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/8.jpg?raw=true","https://github.com/Grafonn/lera-love/blob/main/9.jpg?raw=true"];
+        const audioLinks = ["https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%901.mp3","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%905.mp3","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%902.mp3","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%904.mp3","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%906.mp3","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%903.mp3"];
+        const audioNames = ["Сиси", "Лучший смех", "Моя королева, а я ее раб", "Ой как мило...", "Кайф", "Метр 1.58"];
+        const videos = ["https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%922.mp4","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%923.mp4","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%925.mp4","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%921.mp4","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%924.mp4","https://github.com/Grafonn/lera-love/raw/refs/heads/main/%D0%926.mp4"];
+        const quotes = ["Лера — ты моя новая эра", "Лера — я поправлю для тебя сомбреро", "Лера — ты лучше чем бывшая химера", "Лера — находка для коллекционера", "Лера — для тебя я стану миллиардером"];
+
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.volume = 0.2;
+        function startMusic() { if (bgMusic.paused) bgMusic.play(); }
+
+        const carousel = document.getElementById('carousel');
+        let current = 0, autoTimer;
+        photos.forEach(src => {
+            const img = document.createElement('img'); img.src = src; img.className = 'photo';
+            carousel.appendChild(img);
+        });
+        function updateCarousel() {
+            const items = document.querySelectorAll('.photo');
+            items.forEach((item, i) => {
+                item.classList.remove('active', 'prev', 'next');
+                if (i === current) item.classList.add('active');
+                else if (i === (current - 1 + photos.length) % photos.length) item.classList.add('prev');
+                else if (i === (current + 1) % photos.length) item.classList.add('next');
+            });
+        }
+        function resetAuto() { clearInterval(autoTimer); autoTimer = setInterval(() => { current = (current + 1) % photos.length; updateCarousel(); }, 5000); }
+        carousel.onclick = (e) => {
+            if (e.clientX < window.innerWidth/2) current = (current - 1 + photos.length) % photos.length;
+            else current = (current + 1) % photos.length;
+            updateCarousel(); resetAuto();
+        };
+        updateCarousel(); resetAuto();
+
+        document.getElementById('no').onclick = () => { bgMusic.pause(); document.getElementById('fake-error').style.display = 'flex'; };
+        function closeError() { document.getElementById('fake-error').style.display = 'none'; bgMusic.play(); }
+
+        document.getElementById('yes').onclick = () => {
+            document.getElementById('btnArea').style.display = 'none';
+            document.getElementById('val-q').style.display = 'none';
+            document.getElementById('archive').style.display = 'block';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            setTimeout(() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' }), 500);
+            startTypewriter();
+            showAudiosSequentially();
+        };
+
+        function showAudiosSequentially() {
+            const list = document.getElementById('audios-list');
+            list.innerHTML = '';
+            audioLinks.forEach((link, i) => {
+                const card = document.createElement('div');
+                card.className = 'audio-card';
+                card.id = `card-audio-${i}`;
+                card.innerHTML = `
+                    <div class="play-btn" onclick="toggleAudio(this, 'audio-${i}')">
+                        <div class="play-icon" id="play-i-audio-${i}"></div>
+                        <div class="pause-icon" id="pause-i-audio-${i}"></div>
+                    </div>
+                    <div class="audio-info">
+                        <span>${audioNames[i]}</span>
+                        <div class="wave-icon"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>
+                    </div>
+                    <audio id="audio-${i}" class="v-msg" onplay="onAudioPlay(this)" onpause="onAudioPause(this)" onended="onAudioEnded(this)"><source src="${link}"></audio>
+                `;
+                list.appendChild(card);
+                setTimeout(() => card.classList.add('show'), i * 200);
+            });
+        }
+
+        function toggleAudio(btn, id) {
+            const a = document.getElementById(id);
+            if (a.paused) { stopEverything(); a.play(); } else { a.pause(); }
+        }
+
+        function onAudioPlay(a) {
+            document.getElementById('card-' + a.id).classList.add('playing-card');
+            document.getElementById('play-i-' + a.id).style.display = 'none';
+            document.getElementById('pause-i-' + a.id).style.display = 'flex';
+            bgMusic.volume = 0.05;
+        }
+
+        function onAudioPause(a) {
+            const card = document.getElementById('card-' + a.id);
+            if(card) card.classList.remove('playing-card');
+            const playIcon = document.getElementById('play-i-' + a.id);
+            const pauseIcon = document.getElementById('pause-i-' + a.id);
+            if(playIcon) playIcon.style.display = 'block';
+            if(pauseIcon) pauseIcon.style.display = 'none';
+            if (!document.querySelector('.circle-video.playing')) bgMusic.volume = 0.2;
+        }
+
+        function onAudioEnded(a) {
+            onAudioPause(a);
+            const next = document.getElementById(`audio-${parseInt(a.id.split('-')[1]) + 1}`);
+            if (next) setTimeout(() => next.play(), 400);
+        }
+
+        function showVideosSequentially() {
+            const grid = document.getElementById('videos-grid');
+            grid.innerHTML = '';
+            videos.forEach((link, i) => {
+                const wrap = document.createElement('div'); wrap.className = 'video-wrapper';
+                const animClass = `vid-anim-${(i % 4) + 1}`;
+                wrap.innerHTML = `<video class="circle-video ${animClass}" id="vid-${i}" playsinline onended="onVideoEnded(this)"><source src="${link}" type="video/mp4"></video>`;
+                grid.appendChild(wrap);
+                setTimeout(() => wrap.classList.add('show'), i * 300);
+            });
+        }
+
+        document.getElementById('videos-grid').onclick = (e) => {
+            const v = e.target; if(v.tagName !== 'VIDEO') return;
+            if (v.classList.contains('playing')) { v.pause(); v.classList.remove('playing'); bgMusic.volume = 0.2; }
+            else { stopEverything(); v.play(); v.classList.add('playing'); bgMusic.volume = 0.05; }
+        };
+
+        function onVideoEnded(v) {
+            v.classList.remove('playing');
+            const currentId = parseInt(v.id.split('-')[1]);
+            const nextVid = document.getElementById(`vid-${currentId + 1}`);
+            if (nextVid) {
+                setTimeout(() => {
+                    nextVid.play();
+                    nextVid.classList.add('playing');
+                    bgMusic.volume = 0.05;
+                }, 200);
+            } else { bgMusic.volume = 0.2; }
+        }
+
+        function stopEverything() {
+            document.querySelectorAll('audio:not(#bgMusic), video').forEach(m => {
+                m.pause(); m.currentTime = 0;
+                if(m.tagName === 'VIDEO') m.classList.remove('playing');
+                document.querySelectorAll('.audio-card').forEach(c => c.classList.remove('playing-card'));
+            });
+            bgMusic.volume = 0.2;
+        }
+
+        function openTab(id, btn) {
+            stopEverything();
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            if(id === 'video-tab') showVideosSequentially();
+            if(id === 'audio-tab') showAudiosSequentially();
+        }
+
+        let qIdx = 0;
+        const textEl = document.getElementById('quote-text');
+        async function type(s) {
+            textEl.innerHTML = "";
+            for (const char of s) { textEl.innerHTML += (char === " ") ? "&nbsp;" : char; await new Promise(r => setTimeout(r, 100)); }
+        }
+        async function del() {
+            while (textEl.innerHTML.length > 0) {
+                let c = textEl.innerHTML;
+                textEl.innerHTML = c.endsWith("&nbsp;") ? c.slice(0, -6) : c.slice(0, -1);
+                await new Promise(r => setTimeout(r, 50));
+            }
+        }
+        async function startTypewriter() {
+            while (true) { await type(quotes[qIdx]); await new Promise(r => setTimeout(r, 4000)); await del(); qIdx = (qIdx + 1) % quotes.length; }
+        }
+
+        function showFinalSection() {
+            stopEverything(); 
+            const section = document.getElementById('final-letter');
+            section.style.display = 'block';
+            setTimeout(() => {
+                section.scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => {
+                    document.getElementById('f-photo').classList.add('reveal');
+                    document.getElementById('f-text').classList.add('reveal');
+                }, 500);
+            }, 100);
+        }
+    </script>
+</body>
+</html>
